@@ -1,6 +1,7 @@
 # keepdirchanges
 
-This script follow directory changes since last execution. It is keep ONLY changes and changed files.  
+This script follow directory changes since last execution.  
+It is keep ONLY changes and changed files.  
 It uses [rsync](https://rsync.samba.org/) program. See three main line inside the 'keepdirchanges'.  
 For use it see script 'keepchanges'.  
 

@@ -15,7 +15,7 @@
 # TMP_DIR - created and removed every script execution.
 
 RSYNC_EXE=/usr/bin/rsync
-ROOT_DIR=/root/confkeep
+ROOT_DIR=/root/keepchanges
 WORK_DIR=""	# Relative path.
 KEEP_DIR=""	# Absolute path.
 SRC_DIR=""	# Absolute path.

@@ -24,7 +24,7 @@ some time later:
 $ keepchanges work
 ```
 You have kept changes.  
-Default storage path - "/root/confkeep".  
+Default storage path - "/root/keepchanges".  
 And default tracking paths - "/etc" "/usr/local/bin".  
 
 ### Restriction

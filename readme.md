@@ -29,3 +29,9 @@ And default tracking paths - "/etc" "/usr/local/bin".
 ### Restriction
 
 It can't track binary files, because use 'diff' program for tracking.
+
+### Useful advice
+
+I use 'keepchanges work' for current tracking.
+'keepchanges login' in my '~/bashrc' for fix forgotten changes.
+'keepchanges yum' for yum's post-transaction plugin.

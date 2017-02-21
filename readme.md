@@ -41,3 +41,19 @@ For file 'filename' recovery you can edit filename.changes, if you want, and:
 ```sh
 $ patch -R < filename.changes
 ```
+
+### Changelog
+
+```sh
+# head /root/keepchanges/Changelog
+2017-02-21 14:24:17.617377707+03:00        yum/etc
+Files old/mail.rc and new/mail.rc differ
+Files old/mykeeper/packages.list and new/mykeeper/packages.list differ
+Files old/smartmontools/smartd.conf and new/smartmontools/smartd.conf differ
+Files old/smartmontools/smartd_warning.sh and new/smartmontools/smartd_warning.sh differ
+Files old/sysconfig/smartmontools and new/sysconfig/smartmontools differ
+************************************************
+2017-02-21 14:02:05.988866107+03:00        work/etc
+Files old/fstab and new/fstab differ
+Files old/lvm/archive/vg_00001-518342034.vg and new/lvm/archive/vg_00001-518342034.vg differ
+```

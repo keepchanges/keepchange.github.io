@@ -61,7 +61,7 @@ $RSYNC_EXE -rmclpgo $TMP_DIR/new_with_dir/ $TMP_DIR/new
 $RSYNC_EXE -rclpgob --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
 
 cd $TMP_DIR
-diff -qurN --no-dereference "old" "new" > $TMP_DIR/Changelog
+diff -qrN --no-dereference "old" "new" | tee $TMP_DIR/Changelog
 if [ -s $TMP_DIR/Changelog ]
 then
   echo $(date --rfc-3339=ns) "      " "${WORK_DIR}$SRC_DIR" > $TMP_DIR/Changelog_new

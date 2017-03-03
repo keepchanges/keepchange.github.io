@@ -1,4 +1,5 @@
 #!/bin/sh
 
-rpm -qa |sort > /etc/mykeeper/packages.list
+mkdir -p /etc/keepchanges
+rpm -qa |sort > /etc/keepchanges/packages.list
 /usr/local/bin/keepchanges yum

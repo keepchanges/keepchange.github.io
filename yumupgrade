@@ -1,0 +1,11 @@
+#!/bin/sh
+
+/usr/local/bin/keepchanges work
+if [ "$#" == "0" ]; then
+  yum upgrade
+else
+  yum install "$@"
+fi
+mkdir -p /etc/keepchanges
+rpm -qa |sort > /etc/keepchanges/packages.list
+/usr/local/bin/keepchanges yum

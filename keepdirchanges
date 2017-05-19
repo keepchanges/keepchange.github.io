@@ -56,7 +56,7 @@ mkdir -p $TMP_DIR/old
 
 # Three main lines. Trailing '/' very important. See man rsync.
 $RSYNC_EXE -rmclpgo --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
-$RSYNC_EXE -rmclpgo $TMP_DIR/new_with_dir/ $TMP_DIR/new
+$RSYNC_EXE -rmclpgo $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
 $RSYNC_EXE -rclpgob --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
 
 cd $TMP_DIR

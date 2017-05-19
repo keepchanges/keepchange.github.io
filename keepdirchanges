@@ -5,20 +5,20 @@
 # For use it see script keepchanges.
 
 # The directory tree will be next:
-# ROOT_DIR/orig/SRC... - backup copies of original directories.
-# 'SRC...' - original directory must be set through parameter '-s'. Absolute path.
-# ROOT_DIR/KEEP... - directories for keep changes since the last script execution.
-# 'KEEP...' - storage directory must be set through parameter '-d'. Can't be 'orig'. Relative path.
-# ROOT_DIR/KEEP.../source_path/filename.changes - changes for file 'filename'.
+ROOT_DIR=/root/keepchanges
+SRC_DIR=""	# Relative path.
+WORK_DIR=""	# Relative path.
+# ${SRC_DIR} - original directory must be set through parameter '-s'. Relative path.
+# ${WORK_DIR} - storage directory must be set through parameter '-d'. Can't be 'orig'. Relative path.
+# ROOT_DIR/orig/${SRC_DIR} - backup copy of original directories. Absolute path.
+# ROOT_DIR/${WORK_DIR}${SRC_DIR} -
+# directories for keep changes in ${SRC_DIR} since the last script execution. Absolute path.
+# ROOT_DIR/${WORK_DIR}/${SRC_DIR}/filename.changes - delta changes for file 'filename'.
 # ROOT_DIR/Changelog - common changelog for all changes.
-# TMP_DIR - temporary worked directory.
+# TMP_DIR - temporary working directory.
 # TMP_DIR - created and removed every script execution.
 
 RSYNC_EXE=/usr/bin/rsync
-ROOT_DIR=/root/keepchanges
-WORK_DIR=""	# Relative path.
-KEEP_DIR=""	# Absolute path.
-SRC_DIR=""	# Absolute path.
 
 while getopts d:s: opt; do
   case $opt in
@@ -32,19 +32,18 @@ if [ -z "$WORK_DIR" ]; then echo "Error. No keep dir."; exit 1; fi
 if [ "$WORK_DIR" = "orig" ]; then echo "Error. Wrong keep dir name. Shouldn't be 'orig'."; exit 1; fi
 if [ -z "$SRC_DIR" ]; then echo "Error. No source dir."; exit 1; fi
 
-KEEP_DIR=$ROOT_DIR/"$WORK_DIR"
-CHANGED_DIR=${KEEP_DIR}"$SRC_DIR"
+KEEP_DIR=$ROOT_DIR/"${WORK_DIR}${SRC_DIR}"
 ARCH_DIR=$ROOT_DIR/orig"$SRC_DIR"
 TMP_DIR=$(mktemp -d --tmpdir confXXXX)
 
 function keep_changes {
   local fpath="$1"
-  mkdir -p $(dirname "$CHANGED_DIR/${fpath}")
+  mkdir -p $(dirname "$KEEP_DIR/${fpath}")
   cd $TMP_DIR
   diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
-  touch "$CHANGED_DIR/${fpath}.changes"
-  cat "$CHANGED_DIR/${fpath}.changes" >> $TMP_DIR/changes
-  /usr/bin/mv -fT $TMP_DIR/changes "$CHANGED_DIR/${fpath}.changes"
+  touch "$KEEP_DIR/${fpath}.changes"
+  cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
+  /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
 }
 
 if [ ! -d $ARCH_DIR ]
@@ -77,7 +76,7 @@ find -type f -or -type l |
   while read fpath
   do
     keep_changes "$fpath"
-    /usr/bin/mv -fT "$TMP_DIR/new/$fpath" "$CHANGED_DIR/$fpath"
+    /usr/bin/mv -fT "$TMP_DIR/new/$fpath" "$KEEP_DIR/$fpath"
     /usr/bin/rm -f "$TMP_DIR/old/$fpath"
   done
 #find
@@ -87,7 +86,7 @@ find -type f -or -type l |
   while read fpath
   do
     keep_changes "$fpath"
-    /usr/bin/rm -f "$CHANGED_DIR/$fpath"
+    /usr/bin/rm -f "$KEEP_DIR/$fpath"
   done
 #find
 

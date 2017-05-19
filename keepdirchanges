@@ -12,7 +12,7 @@ WORK_DIR=""	# Relative path.
 # ${WORK_DIR} - storage directory must be set through parameter '-d'. Can't be 'orig'. Relative path.
 # ROOT_DIR/orig/${SRC_DIR} - backup copy of original directories. Absolute path.
 # ROOT_DIR/${WORK_DIR}${SRC_DIR} -
-# directories for keep changes in ${SRC_DIR} since the last script execution. Absolute path.
+# directory for keep changes in ${SRC_DIR} since the last script execution. Absolute path.
 # ROOT_DIR/${WORK_DIR}/${SRC_DIR}/filename.changes - delta changes for file 'filename'.
 # ROOT_DIR/Changelog - common changelog for all changes.
 # TMP_DIR - temporary working directory.

@@ -36,7 +36,7 @@ KEEP_DIR=$ROOT_DIR/"${WORK_DIR}${SRC_DIR}"
 ARCH_DIR=$ROOT_DIR/orig"$SRC_DIR"
 TMP_DIR=$(mktemp -d --tmpdir confXXXX)
 
-function keep_changes {
+function keep_file_changes {
   local fpath="$1"
   mkdir -p $(dirname "$KEEP_DIR/${fpath}")
   cd $TMP_DIR
@@ -75,7 +75,7 @@ cd $TMP_DIR/new
 find -type f -or -type l |
   while read fpath
   do
-    keep_changes "$fpath"
+    keep_file_changes "$fpath"
     /usr/bin/mv -fT "$TMP_DIR/new/$fpath" "$KEEP_DIR/$fpath"
     /usr/bin/rm -f "$TMP_DIR/old/$fpath"
   done
@@ -85,7 +85,7 @@ cd $TMP_DIR/old
 find -type f -or -type l |
   while read fpath
   do
-    keep_changes "$fpath"
+    keep_file_changes "$fpath"
     /usr/bin/rm -f "$KEEP_DIR/$fpath"
   done
 #find

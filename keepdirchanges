@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-# This script follow directory changes since last execution.
+# This script follows directory changes since last execution.
 # It uses rsync program. See 3 main line below.
 # For use it see script keepchanges.
 
 # The directory tree will be next:
 ROOT_DIR=/root/keepchanges
-SRC_DIR=""	# Relative path.
+SRC_DIR=""	# Absolute path.
 WORK_DIR=""	# Relative path.
-# ${SRC_DIR} - original directory must be set through parameter '-s'. Relative path.
-# ${WORK_DIR} - storage directory must be set through parameter '-d'. Can't be 'orig'. Relative path.
+# ${SRC_DIR} - original directory must be set through parameter '-s'.
+# ${WORK_DIR} - storage directory must be set through parameter '-d'. Can't be 'orig'.
 # ROOT_DIR/orig/${SRC_DIR} - backup copy of original directories. Absolute path.
 # ROOT_DIR/${WORK_DIR}${SRC_DIR} -
 # directory for keep changes in ${SRC_DIR} since the last script execution. Absolute path.

@@ -56,8 +56,8 @@ echo "Check '$SRC_DIR'"
 itemized_changes=$($RSYNC_EXE -rclpgoin --exclude-from=/etc/keepchanges/exclude --del $SRC_DIR/ $ARCH_DIR) # Dry run.
 changes=$(echo $itemized_changes | wc -w)
 if [ "$changes" != 0 ]; then
-  echo $itemized_changes
-  read -p "Keep changes? Yes/[No]: " answer
+  echo "$itemized_changes"
+  read -p "Keep changes in '$WORK_DIR'? Yes/[No]: " answer
   if [ "$answer" != "Yes" ]; then exit 0; fi
 else
   echo "No changes."

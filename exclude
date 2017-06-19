@@ -1,0 +1,4 @@
+/cups/
+*.log
+*shadow*
+*password*

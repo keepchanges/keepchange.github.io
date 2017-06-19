@@ -34,7 +34,6 @@ if [ -z "$SRC_DIR" ]; then echo "Error. No source dir."; exit 1; fi
 
 KEEP_DIR=$ROOT_DIR/"${WORK_DIR}${SRC_DIR}"
 ARCH_DIR=$ROOT_DIR/orig"$SRC_DIR"
-TMP_DIR=$(mktemp -d --tmpdir confXXXX)
 
 function keep_file_changes {
   local fpath="$1"
@@ -53,10 +52,19 @@ then
   # Can exit here.
 fi
 
-$RSYNC_EXE -rclpgovn --exclude-from=/etc/keepchanges/exclude --del $SRC_DIR/ $ARCH_DIR # Dry run.
-read -p "Proceed '$SRC_DIR'? Yes/[No]: " answer
-if [ "$answer" != "Yes" ]; then exit 0; fi
+echo "Check '$SRC_DIR'"
+itemized_changes=$($RSYNC_EXE -rclpgoin --exclude-from=/etc/keepchanges/exclude --del $SRC_DIR/ $ARCH_DIR) # Dry run.
+changes=$(echo $itemized_changes | wc -w)
+if [ "$changes" != 0 ]; then
+  echo $itemized_changes
+  read -p "Keep changes? Yes/[No]: " answer
+  if [ "$answer" != "Yes" ]; then exit 0; fi
+else
+  echo "No changes."
+  exit 0
+fi
 
+TMP_DIR=$(mktemp -d --tmpdir confXXXX)
 mkdir -p $TMP_DIR/old
 
 # Three main lines. Trailing '/' very important. See man rsync.

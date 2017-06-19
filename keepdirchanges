@@ -41,23 +41,28 @@ function keep_file_changes {
   mkdir -p $(dirname "$KEEP_DIR/${fpath}")
   cd $TMP_DIR
   diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
-  touch "$KEEP_DIR/${fpath}.changes"
+  touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
   cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
   /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
 }
 
-if [ ! -d $ARCH_DIR ]
+if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
   mkdir -p $ARCH_DIR
   $RSYNC_EXE -rclpgo $SRC_DIR/ $ARCH_DIR
+  # Can exit here.
 fi
+
+$RSYNC_EXE -rclpgovn --exclude-from=/etc/keepchanges/exclude --del $SRC_DIR/ $ARCH_DIR # Dry run.
+read -p "Proceed '$SRC_DIR'? Yes/[No]: " answer
+if [ "$answer" != "Yes" ]; then exit 0; fi
 
 mkdir -p $TMP_DIR/old
 
 # Three main lines. Trailing '/' very important. See man rsync.
-$RSYNC_EXE -rmclpgo --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
-$RSYNC_EXE -rmclpgo $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
-$RSYNC_EXE -rclpgob --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
+$RSYNC_EXE -rmclpgo --exclude-from=/etc/keepchanges/exclude --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
+$RSYNC_EXE -rmclpgo --exclude-from=/etc/keepchanges/exclude $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
+$RSYNC_EXE -rclpgob --exclude-from=/etc/keepchanges/exclude --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
 
 cd $TMP_DIR
 diff -qrN --no-dereference "old" "new" | tee $TMP_DIR/Changelog

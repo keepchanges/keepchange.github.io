@@ -44,20 +44,26 @@ fi
 if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
   mkdir -p $ARCH_DIR
-  $RSYNC_EXE -rclpgo $SRC_DIR/ $ARCH_DIR
+  $RSYNC_EXE $EXCLUDE_FILE -rclpgo $SRC_DIR/ $ARCH_DIR
   # Can exit here.
 fi
 
-printf %b "Check '$SRC_DIR' ... "
+printf %b "Check changes in '$SRC_DIR' ... "
 itemized_changes=$($RSYNC_EXE -rclpgoin $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR) # Dry run.
 changes=$(echo $itemized_changes | wc -w)
-printf %b "DONE.\n"
 if [ "$changes" != 0 ]; then
+  printf %b "DONE.\n"
   echo "$itemized_changes"
-  read -p "Keep changes in '$WORK_DIR'? Yes/[No]: " answer
-  if [ "$answer" != "Yes" ]; then exit 0; fi
+  echo "Keep changes in '$WORK_DIR' or sync with 'orig'?"
+  read -p "Keep/Sync/[Skip]: " answer
+  if [ "$answer" == "Sync" ]; then
+    $RSYNC_EXE -rclpgo $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR
+    exit 0;
+  elif [ "$answer" != "Keep" ]; then
+    exit 0;
+  fi
 else
-  echo "No changes."
+  printf %b "No changes.\n"
   exit 0
 fi
 

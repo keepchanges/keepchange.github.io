@@ -34,16 +34,12 @@ if [ -z "$SRC_DIR" ]; then echo "Error. No source dir."; exit 1; fi
 
 KEEP_DIR=$ROOT_DIR/"${WORK_DIR}${SRC_DIR}"
 ARCH_DIR=$ROOT_DIR/orig"$SRC_DIR"
-
-function keep_file_changes {
-  local fpath="$1"
-  mkdir -p $(dirname "$KEEP_DIR/${fpath}")
-  cd $TMP_DIR
-  diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
-  touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
-  cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
-  /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
-}
+if [ -f "$SRC_DIR/keepchanges.exclude" ]
+then
+  EXCLUDE_FILE="--exclude-from=$SRC_DIR/keepchanges.exclude"
+else
+  EXCLUDE_FILE=""
+fi
 
 if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
@@ -52,9 +48,10 @@ then
   # Can exit here.
 fi
 
-echo "Check '$SRC_DIR'"
-itemized_changes=$($RSYNC_EXE -rclpgoin --exclude-from=/etc/keepchanges/exclude --del $SRC_DIR/ $ARCH_DIR) # Dry run.
+printf %b "Check '$SRC_DIR' ... "
+itemized_changes=$($RSYNC_EXE -rclpgoin $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR) # Dry run.
 changes=$(echo $itemized_changes | wc -w)
+printf %b "DONE.\n"
 if [ "$changes" != 0 ]; then
   echo "$itemized_changes"
   read -p "Keep changes in '$WORK_DIR'? Yes/[No]: " answer
@@ -67,22 +64,28 @@ fi
 TMP_DIR=$(mktemp -d --tmpdir confXXXX)
 mkdir -p $TMP_DIR/old
 
+function keep_file_changes {
+  local fpath="$1"
+  mkdir -p $(dirname "$KEEP_DIR/${fpath}")
+  cd $TMP_DIR
+  diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
+  touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
+  cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
+  /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
+}
+
 # Three main lines. Trailing '/' very important. See man rsync.
-$RSYNC_EXE -rmclpgo --exclude-from=/etc/keepchanges/exclude --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
-$RSYNC_EXE -rmclpgo --exclude-from=/etc/keepchanges/exclude $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
-$RSYNC_EXE -rclpgob --exclude-from=/etc/keepchanges/exclude --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
+$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
+$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
+$RSYNC_EXE -rclpgob "$EXCLUDE_FILE" --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
 
 cd $TMP_DIR
-diff -qrN --no-dereference "old" "new" | tee $TMP_DIR/Changelog
-if [ -s $TMP_DIR/Changelog ]
-then
-  echo $(date --rfc-3339=ns) "      " "${WORK_DIR}$SRC_DIR" > $TMP_DIR/Changelog_new
-  cat  $TMP_DIR/Changelog >> $TMP_DIR/Changelog_new
-  echo '************************************************' >> $TMP_DIR/Changelog_new
-  touch "$ROOT_DIR/Changelog"
-  cat "$ROOT_DIR/Changelog" >> $TMP_DIR/Changelog_new
-  /usr/bin/mv -fT $TMP_DIR/Changelog_new "$ROOT_DIR/Changelog"
-fi
+echo $(date --rfc-3339=ns) "      " "${WORK_DIR}$SRC_DIR" > $TMP_DIR/Changelog_new
+echo "$itemized_changes" >> $TMP_DIR/Changelog_new
+echo '************************************************' >> $TMP_DIR/Changelog_new
+touch "$ROOT_DIR/Changelog"
+cat "$ROOT_DIR/Changelog" >> $TMP_DIR/Changelog_new
+/usr/bin/mv -fT $TMP_DIR/Changelog_new "$ROOT_DIR/Changelog"
 
 cd $TMP_DIR/new
 find -type f -or -type l |

@@ -6,7 +6,7 @@ else
   read -p "Keep in standart path? [work]: " answer
   if [ -n "$answer" ]; then KEEP_DIR="$answer"; fi
 fi
-for s in "/etc" "/usr/local/bin"
+for s in "/etc" "/usr/local/bin" "/root/work/github/keepchanges"
 do
   /usr/local/bin/keepdirchanges -s "$s" -d "$KEEP_DIR"
 done

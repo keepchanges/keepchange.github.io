@@ -44,8 +44,10 @@ fi
 if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
   mkdir -p $ARCH_DIR
+  printf %b "First time sync the '$SRC_DIR' in the 'orig' ... "
   $RSYNC_EXE $EXCLUDE_FILE -rclpgo $SRC_DIR/ $ARCH_DIR
-  # Can exit here.
+  printf %b "DONE.\n"
+  exit 0
 fi
 
 printf %b "Check changes in '$SRC_DIR' ... "
@@ -89,9 +91,10 @@ cd $TMP_DIR
 echo $(date --rfc-3339=ns) "      " "${WORK_DIR}$SRC_DIR" > $TMP_DIR/Changelog_new
 echo "$itemized_changes" >> $TMP_DIR/Changelog_new
 echo '************************************************' >> $TMP_DIR/Changelog_new
-touch "$ROOT_DIR/Changelog"
-cat "$ROOT_DIR/Changelog" >> $TMP_DIR/Changelog_new
-/usr/bin/mv -fT $TMP_DIR/Changelog_new "$ROOT_DIR/Changelog"
+changelog_file=$ROOT_DIR/$(echo "${SRC_DIR##/}" | tr / _).log
+touch "$changelog_file"
+cat "$changelog_file" >> $TMP_DIR/Changelog_new
+/usr/bin/mv -fT $TMP_DIR/Changelog_new "$changelog_file"
 
 cd $TMP_DIR/new
 find -type f -or -type l |

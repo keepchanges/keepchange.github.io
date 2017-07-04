@@ -2,4 +2,4 @@
 
 mkdir -p /etc/keepchanges
 rpm -qa |sort > /etc/keepchanges/packages.list
-/usr/local/bin/keepchanges yum
+/usr/local/bin/keepchanges

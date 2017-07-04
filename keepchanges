@@ -1,12 +1,171 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-KEEP_DIR=work
-if [ -n "$1" ]; then KEEP_DIR="$1"
-else 
-  read -p "Keep in standart path? [work]: " answer
-  if [ -n "$answer" ]; then KEEP_DIR="$answer"; fi
+# This script follows directory changes since last execution.
+# It uses rsync program. See 3 main line below.
+# For use it see script keepchanges.
+
+# The directory tree will be next:
+# ORIGSTORE=/var/cache/keepchanges
+# KEEPCHANGES=/root/keepchanges
+# LOGFILES=$KEEPCHANGES
+# TRACEABLE="/etc /usr/local/bin"
+# RSYNC_EXE=/usr/bin/rsync
+# EXCLUDEFILE=keepchanges.exclude
+
+CONFIG_FILE=/etc/keepchanges/keepchanges.conf
+
+function usage {
+cat <<"USAGE_END"
+
+Usage:	keepchanges [-c|d|s|t|l|e path_name] ... [-h]
+	-c - Config file, default "/etc/keepchanges/keepchanges.conf".
+	All other default setups are in the config file. The command line parameters have the preferences.
+	-d - directory for keeps changes,
+	-s - traceable directories, plural should be in quotas with space as delimeter,
+	-t - store for copy of the traceable directory,
+	-l - store for log files,
+	-e - file name with a list of excluded files, relative to traceable directory,
+	-h - help.
+USAGE_END
+}
+
+function parse_parameters {
+OPTIND=1
+while getopts c:d:s:t:l:e:h opt; do
+  case $opt in
+  c) CONFIG_FILE="$OPTARG" ;;
+  d) KEEPCHANGES="$OPTARG" ;;
+  s) TRACEABLE="$OPTARG" ;;
+  t) ORIGSTORE="$OPTARG" ;;
+  l) LOGFILES="$OPTARG" ;;
+  e) EXCLUDEFILE="$OPTARG" ;;
+  h) usage; exit 0 ;;
+  \?) usage; exit 1 ;;
+  esac
+done
+}
+
+parse_parameters "$@"
+if [ -f "$CONFIG_FILE" ]
+then
+  source "$CONFIG_FILE"
+else
+  echo Error: no config file found.
+  usage
+  exit 1
 fi
-for s in "/etc" "/usr/local/bin" "/root/work/github/keepchanges"
+
+parse_parameters "$@"
+
+if [ -z "$KEEPCHANGES" -o -z "$ORIGSTORE" -o -z "$LOGFILES" ]
+then
+  echo Error: zero directory KEEPCHANGES or ORIGSTORE or LOGFILES.
+  exit 1;
+fi
+
+mkdir -p "$KEEPCHANGES"
+mkdir -p "$ORIGSTORE"
+mkdir -p "$LOGFILES"
+
+function keep_path {
+
+SRC_DIR="$1"	# Absolute path.
+if [ ! -d "$SRC_DIR" ]
+then 
+  echo "Error: no source '$SRC_DIR' directory."
+  return 1 # Try others directory.
+fi
+
+if [ -f "$SRC_DIR/$EXCLUDEFILE" ]
+then
+  EXCLUDE_FILE="--exclude-from=$SRC_DIR/$EXCLUDEFILE"
+else
+  EXCLUDE_FILE=""
+fi
+
+KEEP_DIR="${KEEPCHANGES}${SRC_DIR}"
+ARCH_DIR="${ORIGSTORE}${SRC_DIR}"
+
+if [ ! -d $ARCH_DIR ] # Is it the first time launch?
+then
+  mkdir -p $ARCH_DIR
+  printf %b "First time sync the '$SRC_DIR' in the '$KEEPCHANGES' ... "
+  $RSYNC_EXE $EXCLUDE_FILE -rclpgo $SRC_DIR/ $ARCH_DIR
+  printf %b "DONE.\n"
+  return 0
+fi
+
+printf %b "Check changes in '$SRC_DIR' ... "
+itemized_changes=$($RSYNC_EXE -rclpgoin $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR) # Dry run.
+changes=$(echo $itemized_changes | wc -w)
+if [ "$changes" != 0 ]; then
+  printf %b "DONE.\n"
+  echo "$itemized_changes"
+  echo "Keep changes in '$KEEPCHANGES' or sync with '$ORIGSTORE'?"
+  read -p "Keep/Sync/[Skip]: " answer
+  if [ "$answer" == "Sync" ]; then
+    $RSYNC_EXE -rclpgo $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR
+    return 0
+  elif [ "$answer" != "Keep" ]; then
+    return 0
+  fi
+else
+  printf %b "No changes.\n"
+  return 0
+fi
+
+TMP_DIR=$(mktemp -d --tmpdir confXXXX)
+mkdir -p $TMP_DIR/old
+
+# Three main lines. Trailing '/' very important. See man rsync.
+$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
+$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
+$RSYNC_EXE -rclpgob "$EXCLUDE_FILE" --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
+
+echo $(date --rfc-3339=ns) > $TMP_DIR/Changelog_new
+echo "$itemized_changes"  >> $TMP_DIR/Changelog_new
+echo '************************************************' >> $TMP_DIR/Changelog_new
+changelog_file=$LOGFILES/$(echo "${SRC_DIR##/}" | tr / _).log
+touch "$changelog_file"
+cat "$changelog_file" >> $TMP_DIR/Changelog_new
+/usr/bin/mv -fT $TMP_DIR/Changelog_new "$changelog_file"
+
+CURDIR=$(pwd)
+cd $TMP_DIR/new
+find -type f -or -type l |
+  while read fpath
+  do
+    keep_file_changes "$fpath"
+    /usr/bin/mv -fT "$TMP_DIR/new/$fpath" "$KEEP_DIR/$fpath"
+    /usr/bin/rm -f "$TMP_DIR/old/$fpath"
+  done
+#find
+
+cd $TMP_DIR/old
+find -type f -or -type l |
+  while read fpath
+  do
+    keep_file_changes "$fpath"
+    /usr/bin/rm -f "$KEEP_DIR/$fpath"
+  done
+#find
+
+cd "$CURDIR"
+rm -rf $TMP_DIR
+}
+# END OF keep_path
+
+function keep_file_changes {
+  local fpath="$1"
+  mkdir -p $(dirname "$KEEP_DIR/${fpath}")
+  cd $TMP_DIR
+  diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
+  touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
+  cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
+  /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
+}
+
+for s in $TRACEABLE
 do
-  /usr/local/bin/keepdirchanges -s "$s" -d "$KEEP_DIR"
+  keep_path "$s"
 done

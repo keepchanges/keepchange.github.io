@@ -89,7 +89,7 @@ ARCH_DIR="${ORIGSTORE}${SRC_DIR}"
 if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
   mkdir -p $ARCH_DIR
-  printf %b "First time sync the '$SRC_DIR' in the '$KEEPCHANGES' ... "
+  printf %b "First time sync the '$SRC_DIR' in the '$ARCH_DIR' ... "
   $RSYNC_EXE $EXCLUDE_FILE -rclpgo $SRC_DIR/ $ARCH_DIR
   printf %b "DONE.\n"
   return 0

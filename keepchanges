@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# This script follows directory changes since last execution.
+# This script traces directory changes since last execution.
 # It uses rsync program. See 3 main line below.
-# For use it see script keepchanges.
 
 # The directory tree will be next:
 # ORIGSTORE=/var/cache/keepchanges
@@ -19,7 +18,7 @@ Usage:	keepchanges [-c|d|s|t|l|e path_name] ... [-h]
 	-c - Config file, default "/etc/keepchanges/keepchanges.conf".
 	All other default setups are in the config file. The command line parameters have the preferences.
 	-d - directory for keeps changes,
-	-s - traceable directories, plural should be in quotas with space as delimeter,
+	-s - traceable directory, can be plural in that case should be in quotas with space as delimeter,
 	-t - store for copy of the traceable directory,
 	-l - store for log files,
 	-e - file name with a list of excluded files, relative to traceable directory,
@@ -53,15 +52,21 @@ else
   usage
   exit 1
 fi
+
 parse_parameters "$@"
-if [ -z "$KEEPCHANGES" -o -z "$ORIGSTORE" -o -z "$LOGFILES" ]
-then
-  echo Error: zero directory KEEPCHANGES or ORIGSTORE or LOGFILES.
-  exit 1;
-fi
-mkdir -p "$KEEPCHANGES"
-mkdir -p "$ORIGSTORE"
-mkdir -p "$LOGFILES"
+function create_directory {
+  echo "There isn't the '$1'."
+  read -p "Create the directory? Yes/[No]: " answer
+  if [ "$answer" == "Yes" ]; then
+    mkdir -p "$1"
+  else
+    usage
+    exit 1;
+  fi
+}
+if [ ! -d "$KEEPCHANGES" ]; then create_directory "$KEEPCHANGES"; fi
+if [ ! -d "$ORIGSTORE" ]; then create_directory "$ORIGSTORE"; fi
+if [ ! -d "$LOGFILES" ]; then create_directory "$LOGFILES"; fi
 
 function keep_path {
 SRC_DIR="$1"	# Absolute path.
@@ -109,7 +114,7 @@ else
   return 0
 fi
 
-TMP_DIR=$(mktemp -d --tmpdir confXXXX)
+TMP_DIR=$(mktemp -d --tmpdir kcXXXX)
 mkdir -p $TMP_DIR/old
 
 # Three main lines. Trailing '/' very important. See man rsync.

@@ -12,8 +12,6 @@
 # RSYNC_EXE=/usr/bin/rsync
 # EXCLUDEFILE=keepchanges.exclude
 
-CONFIG_FILE=/etc/keepchanges/keepchanges.conf
-
 function usage {
 cat <<"USAGE_END"
 
@@ -45,6 +43,7 @@ while getopts c:d:s:t:l:e:h opt; do
 done
 }
 
+CONFIG_FILE=/etc/keepchanges/keepchanges.conf
 parse_parameters "$@"
 if [ -f "$CONFIG_FILE" ]
 then
@@ -54,21 +53,17 @@ else
   usage
   exit 1
 fi
-
 parse_parameters "$@"
-
 if [ -z "$KEEPCHANGES" -o -z "$ORIGSTORE" -o -z "$LOGFILES" ]
 then
   echo Error: zero directory KEEPCHANGES or ORIGSTORE or LOGFILES.
   exit 1;
 fi
-
 mkdir -p "$KEEPCHANGES"
 mkdir -p "$ORIGSTORE"
 mkdir -p "$LOGFILES"
 
 function keep_path {
-
 SRC_DIR="$1"	# Absolute path.
 if [ ! -d "$SRC_DIR" ]
 then 

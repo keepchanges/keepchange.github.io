@@ -14,7 +14,7 @@
 function usage {
 cat <<"USAGE_END"
 
-Usage:	keepchanges [-c|d|s|t|l|e path_name] ... [-h]
+Usage:	keepchanges [-c|d|s|t|l|e path_name] ... [-h] [-n]
 	-c - Config file, default "/etc/keepchanges/keepchanges.conf".
 	All other default setups are in the config file. The command line parameters have the preferences.
 	-d - directory for keeps changes,
@@ -23,12 +23,13 @@ Usage:	keepchanges [-c|d|s|t|l|e path_name] ... [-h]
 	-l - store for log files,
 	-e - file name with a list of excluded files, relative to traceable directory,
 	-h - help.
+	-n - Dry run. Perform a trial run with no changes made.
 USAGE_END
 }
 
 function parse_parameters {
 OPTIND=1
-while getopts c:d:s:t:l:e:h opt; do
+while getopts c:d:s:t:l:e:hn opt; do
   case $opt in
   c) CONFIG_FILE="$OPTARG" ;;
   d) KEEPCHANGES="$OPTARG" ;;
@@ -37,6 +38,7 @@ while getopts c:d:s:t:l:e:h opt; do
   l) LOGFILES="$OPTARG" ;;
   e) EXCLUDEFILE="$OPTARG" ;;
   h) usage; exit 0 ;;
+  n) TRIALMODE=Yes ;;
   \?) usage; exit 1 ;;
   esac
 done
@@ -101,8 +103,12 @@ changes=$(echo $itemized_changes | wc -w)
 if [ "$changes" != 0 ]; then
   printf %b "DONE.\n"
   echo "$itemized_changes"
-  echo "Keep changes in '$KEEPCHANGES' or sync with '$ORIGSTORE'?"
-  read -p "Keep/Sync/[Skip]: " answer
+  if [ "$TRIALMODE" == Yes ]; then
+    return 0
+  else
+    echo "Keep changes in '$KEEPCHANGES' or sync with '$ORIGSTORE'?"
+    read -p "Keep/Sync/[Skip]: " answer
+  fi
   if [ "$answer" == "Sync" ]; then
     $RSYNC_EXE -rclpgo $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR
     return 0

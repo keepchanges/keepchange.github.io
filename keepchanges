@@ -82,7 +82,7 @@ if [ -f "$SRC_DIR/$EXCLUDEFILE" ]
 then
   EXCLUDE_FILE="--exclude-from=$SRC_DIR/$EXCLUDEFILE"
 else
-  EXCLUDE_FILE=""
+  EXCLUDE_FILE="--exclude-from="
 fi
 
 KEEP_DIR="${KEEPCHANGES}${SRC_DIR}"
@@ -92,13 +92,13 @@ if [ ! -d $ARCH_DIR ] # Is it the first time launch?
 then
   mkdir -p $ARCH_DIR
   printf %b "First time sync the '$SRC_DIR' in the '$ARCH_DIR' ... "
-  $RSYNC_EXE $EXCLUDE_FILE -rclpgo $SRC_DIR/ $ARCH_DIR
+  $RSYNC_EXE "$EXCLUDE_FILE" -rclpgo $SRC_DIR/ $ARCH_DIR
   printf %b "DONE.\n"
   return 0
 fi
 
 printf %b "Check changes in '$SRC_DIR' ... "
-itemized_changes=$($RSYNC_EXE -rclpgoin $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR) # Dry run.
+itemized_changes=$($RSYNC_EXE -rclpgoin "$EXCLUDE_FILE" --del $SRC_DIR/ $ARCH_DIR) # Dry run.
 changes=$(echo $itemized_changes | wc -w)
 if [ "$changes" != 0 ]; then
   printf %b "DONE.\n"
@@ -110,7 +110,7 @@ if [ "$changes" != 0 ]; then
     read -p "Keep/Sync/[Skip]: " answer
   fi
   if [ "$answer" == "Sync" ]; then
-    $RSYNC_EXE -rclpgo $EXCLUDE_FILE --del $SRC_DIR/ $ARCH_DIR
+    $RSYNC_EXE -rclpgo "$EXCLUDE_FILE" --del $SRC_DIR/ $ARCH_DIR
     return 0
   elif [ "$answer" != "Keep" ]; then
     return 0
@@ -165,7 +165,13 @@ function keep_file_changes {
   local fpath="$1"
   mkdir -p $(dirname "$KEEP_DIR/${fpath}")
   cd $TMP_DIR
-  diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
+  if   [ ! -a "old/$fpath" -a -L "new/$fpath" ]; then
+    echo "The symbolic link created."  > $TMP_DIR/changes
+  elif [ ! -a "new/$fpath" -a -L "old/$fpath" ]; then
+    echo "The symbolic link deleted."  > $TMP_DIR/changes
+  else
+    diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
+  fi
   touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
   cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
   /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"

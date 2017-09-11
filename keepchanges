@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # This script preserve directories copy in backup store and
 # it tracks changes in the directories since the last execution.

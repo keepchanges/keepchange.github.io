@@ -5,3 +5,8 @@
 .*
 *proba*
 keepchanges.exclude
+group*
+ld.so.cache
+ld.so.conf.d
+yum.repos.d
+resolv.conf

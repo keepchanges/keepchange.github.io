@@ -1,5 +1,3 @@
-# keepchanges
-
 This script preserve directories copy in a backup store and  
 it tracks changes in the directories since the last execution.  
 In a special (keeping) store (different from the backup)  

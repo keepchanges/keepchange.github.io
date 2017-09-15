@@ -11,7 +11,7 @@ CONFIG_FILE=/etc/keepchanges/keepchanges.conf
 EXCPATTERN="--exclude="
 INCPATTERN="--include="
 
-# ORIGSTORE=/var/local/keepchanges/store
+# BACKSTORE=/var/local/keepchanges/store
 # KEEPCHANGES=/var/local/keepchanges/configs
 # LOGFILES=/var/local/keepchanges/logs
 # TRACEABLE="/etc /usr/local/bin"
@@ -54,7 +54,7 @@ while getopts c:d:r:b:l:e:i:hnksqv opt; do
   c) CONFIG_FILE="$OPTARG" ;;
   d) KEEPCHANGES="$OPTARG" ;;
   r) TRACEABLE="$OPTARG" ;;
-  b) ORIGSTORE="$OPTARG" ;;
+  b) BACKSTORE="$OPTARG" ;;
   l) LOGFILES="$OPTARG" ;;
   e) EXCPATTERN="--exclude=$OPTARG" ;;
   i) INCPATTERN="--include=$OPTARG" ;;
@@ -95,7 +95,7 @@ function create_directory {
   fi
 }
 if [ ! -d "$KEEPCHANGES" ]; then create_directory "$KEEPCHANGES"; fi
-if [ ! -d "$ORIGSTORE" ]; then create_directory "$ORIGSTORE"; fi
+if [ ! -d "$BACKSTORE" ]; then create_directory "$BACKSTORE"; fi
 if [ ! -d "$LOGFILES" ]; then create_directory "$LOGFILES"; fi
 
 function keep_path {
@@ -114,7 +114,7 @@ else
 fi
 
 KEEP_DIR="${KEEPCHANGES}${SRC_DIR}"
-BACK_DIR="${ORIGSTORE}${SRC_DIR}"
+BACK_DIR="${BACKSTORE}${SRC_DIR}"
 
 if [ ! -d $BACK_DIR ] # Is it the first time launch?
 then

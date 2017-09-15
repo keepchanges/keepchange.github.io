@@ -20,7 +20,7 @@ Edit '/etc/keepchanges/keepchanges.conf'.
 ### The default settings:
 
 CONFIG_FILE=/etc/keepchanges/keepchanges.conf  
-ORIGSTORE=/var/local/keepchanges/store  
+BACKSTORE=/var/local/keepchanges/store  
 KEEPCHANGES=/var/local/keepchanges/configs  
 LOGFILES=/var/local/keepchanges/logs  
 TRACEABLE="/etc /usr/local/bin"  

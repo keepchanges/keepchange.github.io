@@ -28,7 +28,7 @@ EXCLUDEFROM=keepchanges.exclude
 RSYNC_EXE=/usr/bin/rsync  
 
 ### Using
-  
+```  
 keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]  
 	-c - The config file name, default:  
 	     "/etc/keepchanges/keepchanges.conf".  
@@ -52,8 +52,8 @@ keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]
 	-h - help,  
 	-q - quiet run, without acknowledgement query for each file,  
 	-v - be verbose.  
-  
 
+```  
 For example:  
 ```sh
 $ keepchanges

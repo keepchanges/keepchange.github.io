@@ -8,17 +8,20 @@
 
 # The default settings:
 CONFIG_FILE=/etc/keepchanges/keepchanges.conf
-# KEEPCHANGES=/root/keepchanges
+EXCPATTERN="--exclude="
+INCPATTERN="--include="
+
+# ORIGSTORE=/var/local/keepchanges/store
+# KEEPCHANGES=/var/local/keepchanges/configs
+# LOGFILES=/var/local/keepchanges/logs
 # TRACEABLE="/etc /usr/local/bin"
-# ORIGSTORE=/var/cache/keepchanges
-# LOGFILES=$KEEPCHANGES
-# EXCLUDEFILE=keepchanges.exclude
+# EXCLUDEFROM=keepchanges.exclude
 # RSYNC_EXE=/usr/bin/rsync
 
 function usage {
 cat <<"USAGE_END"
 
-Usage:	keepchanges [-c|d|r|t|l|e path_name] [-h] [-n] [-k] [-s] [-v]
+Usage:	keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]
 	-c - The config file name, default:
 	     "/etc/keepchanges/keepchanges.conf".
 	All other default setups are in the config file.
@@ -27,34 +30,39 @@ Usage:	keepchanges [-c|d|r|t|l|e path_name] [-h] [-n] [-k] [-s] [-v]
 	-r - the traceable directory, can be plural in that case
 	     should be in quotes with a space as delimeter,
 	     can not have a space in the name,
-	-t - the backup storage for the copy of the traceable directory,
-	     we will be compare the current traceable directory content
-	     with this copy, saved from the previous launch,
-	-l - the backup storage for the log files,
-	-e - the file name with a list of excluded files,
-	     relative to the traceable directory,
-	-h - help,
+	-b - the backup storage for the copies of the traceable directories,
+	     we will be compare the current traceable directories content
+	     with this copies, saved from the previous launch,
+	-l - the log files directory,
+	-e - pattern for excluded files (see man rsync),
+	-i - pattern for included files (see man rsync)
+	     has priority above the '-e' option, for example:
+	     for keep only a 'foo' file use this options (-e '*' -i 'foo'),
 	-n - dry run, perform a trial run with no changes make,
-	-k - keep changes without acknowledgement query,
-	-s - sync changes without acknowledgement query,
+	-k - keep changes in the keeping store,
+	-s - sync changes in the backup store,
+	-h - help,
+	-q - quiet run, without acknowledgement query for each file,
 	-v - be verbose.
 USAGE_END
 }
 
 function parse_parameters {
 OPTIND=1
-while getopts c:d:r:t:l:e:hnksv opt; do
+while getopts c:d:r:b:l:e:i:hnksqv opt; do
   case $opt in
   c) CONFIG_FILE="$OPTARG" ;;
   d) KEEPCHANGES="$OPTARG" ;;
   r) TRACEABLE="$OPTARG" ;;
-  t) ORIGSTORE="$OPTARG" ;;
+  b) ORIGSTORE="$OPTARG" ;;
   l) LOGFILES="$OPTARG" ;;
-  e) EXCLUDEFILE="$OPTARG" ;;
+  e) EXCPATTERN="--exclude=$OPTARG" ;;
+  i) INCPATTERN="--include=$OPTARG" ;;
   h) usage; exit 0 ;;
   n) RUNMODE=Trial ;;
   k) RUNMODE=Keep ;;
   s) RUNMODE=Sync ;;
+  q) QUIETRUN=Yes ;;
   v) VERBOSE=Yes ;;
   \?) usage; exit 1 ;;
   esac
@@ -70,12 +78,12 @@ else
   usage
   exit 1
 fi
+parse_parameters "$@"
 
 function vmes {
   if [ "$VERBOSE" == Yes ]; then echo "$1"; fi
 }
 
-parse_parameters "$@"
 function create_directory {
   vmes "There isn't the '$1'."
   read -p "Create the directory '$1'? Yes/[No]: " answer
@@ -98,27 +106,27 @@ then
   return 1 # Try others directory.
 fi
 
-if [ -f "$SRC_DIR/$EXCLUDEFILE" ]
+if [ -f "$SRC_DIR/$EXCLUDEFROM" ]
 then
-  EXCLUDE_FILE="--exclude-from=$SRC_DIR/$EXCLUDEFILE"
+  EXCFROM="--exclude-from=$SRC_DIR/$EXCLUDEFROM"
 else
-  EXCLUDE_FILE="--exclude-from="
+  EXCFROM="--exclude-from="
 fi
 
 KEEP_DIR="${KEEPCHANGES}${SRC_DIR}"
-ARCH_DIR="${ORIGSTORE}${SRC_DIR}"
+BACK_DIR="${ORIGSTORE}${SRC_DIR}"
 
-if [ ! -d $ARCH_DIR ] # Is it the first time launch?
+if [ ! -d $BACK_DIR ] # Is it the first time launch?
 then
-  mkdir -p $ARCH_DIR
+  mkdir -p $BACK_DIR
   vmes "First time keep the '$SRC_DIR'"
-  vmes "in the '$ARCH_DIR' ... "
-  $RSYNC_EXE "$EXCLUDE_FILE" -rclpgo $SRC_DIR/ $ARCH_DIR
+  vmes "in the '$BACK_DIR' ... "
+  $RSYNC_EXE "$EXCFROM" "$INCPATTERN" "$EXCPATTERN" -rclpgo $SRC_DIR/ $BACK_DIR
   vmes "DONE."
   return 0
 fi
 
-itemized_changes=$($RSYNC_EXE -rclpgoin "$EXCLUDE_FILE" --del $SRC_DIR/ $ARCH_DIR) # Dry run.
+itemized_changes=$($RSYNC_EXE -rclpgoin "$EXCFROM" "$INCPATTERN" "$EXCPATTERN" --del $SRC_DIR/ $BACK_DIR) # Dry run.
 changes=$(echo $itemized_changes | wc -w)
 # Has the '$SRC_DIR' been changed?
 if [ "$changes" != 0 ]; then
@@ -126,19 +134,16 @@ if [ "$changes" != 0 ]; then
   echo "$itemized_changes"
   echo "in the '$SRC_DIR'."
   if   [ "$RUNMODE" == Trial ]; then
-    return 0
+    curmode=Trial
   elif [ "$RUNMODE" == Sync  ]; then
-    answer=Sync
+    curmode=Sync
   elif [ "$RUNMODE" == Keep  ]; then
-    answer=Keep
+    curmode=Keep
   else
     vmes "Keep the changes or sync (all the changes will be ignored) with backup?"
-    read -p "Keep/Sync/[Not now]: " answer
+    read -p "Keep/Sync/[Not now]: " curmode
   fi
-  if [ "$answer" == "Sync" ]; then
-    $RSYNC_EXE -rclpgo "$EXCLUDE_FILE" --del $SRC_DIR/ $ARCH_DIR
-    return 0
-  elif [ "$answer" != "Keep" ]; then
+  if [ "$curmode" != Sync -a "$curmode" != Keep ]; then
     return 0
   fi
 else
@@ -150,42 +155,74 @@ TMP_DIR=$(mktemp -d --tmpdir kcXXXX)
 mkdir -p $TMP_DIR/old
 
 # Three main lines. Trailing '/' very important. See man rsync.
-$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" --compare-dest="$ARCH_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
-$RSYNC_EXE -rmclpgo "$EXCLUDE_FILE" $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
-$RSYNC_EXE -rclpgob "$EXCLUDE_FILE" --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$ARCH_DIR"
-
-echo $(date --rfc-3339=ns) > $TMP_DIR/Changelog_new
-echo "$itemized_changes"  >> $TMP_DIR/Changelog_new
-echo '************************************************' >> $TMP_DIR/Changelog_new
-changelog_file=$LOGFILES/$(echo "${SRC_DIR##/}" | tr / _).log
-touch "$changelog_file"
-cat "$changelog_file" >> $TMP_DIR/Changelog_new
-/usr/bin/mv -fT $TMP_DIR/Changelog_new "$changelog_file"
+$RSYNC_EXE -rmclpgo "$EXCFROM" "$INCPATTERN" "$EXCPATTERN" --compare-dest="$BACK_DIR" "$SRC_DIR/" $TMP_DIR/new_with_dir
+$RSYNC_EXE -rmclpgo "$EXCFROM" "$INCPATTERN" "$EXCPATTERN" $TMP_DIR/new_with_dir/ $TMP_DIR/new  #For skip empty directory
+$RSYNC_EXE -rclpgob "$EXCFROM" "$INCPATTERN" "$EXCPATTERN" --backup-dir=$TMP_DIR/old --del "$SRC_DIR/" "$BACK_DIR"
 
 CURDIR=$(pwd)
 cd $TMP_DIR/new
 find -type f -or -type l |
-  while read fpath
-  do
+while read fpath
+do
+  ask_ack
+  case "$ack" in
+  Y)
+  if [ "$curmode" == Keep ]; then
     keep_file_changes "$fpath"
     /usr/bin/mv -fT "$TMP_DIR/new/$fpath" "$KEEP_DIR/$fpath"
-    /usr/bin/rm -f "$TMP_DIR/old/$fpath"
-  done
+  fi
+  /usr/bin/rm -f "$TMP_DIR/old/$fpath"
+  ;;
+  *)
+  if [ -a "$TMP_DIR/old/$fpath" ]; then
+    /usr/bin/mv -fT "$TMP_DIR/old/$fpath" "$BACK_DIR/$fpath"
+  else
+    /usr/bin/rm -f "$BACK_DIR/$fpath"
+  fi
+  ;;
+  esac
+done
 #find
 
 cd $TMP_DIR/old
 find -type f -or -type l |
-  while read fpath
-  do
+while read fpath
+do
+  ask_ack
+  case "$ack" in
+  Y)
+  if [ "$curmode" == Keep ]; then
     keep_file_changes "$fpath"
     /usr/bin/rm -f "$KEEP_DIR/$fpath"
-  done
+  fi
+  ;;
+  *)
+  /usr/bin/mv -fT "$TMP_DIR/old/$fpath" "$BACK_DIR/$fpath"
+  ;;
+  esac
+done
 #find
+
+if [ -f  $TMP_DIR/Changelog_new ]; then
+  echo '**********' $(date --rfc-3339=seconds) '**********' >> $TMP_DIR/Changelog_new
+  changelog_file=$LOGFILES/$(echo "${SRC_DIR##/}" | tr / _).log
+  touch "$changelog_file"
+  cat "$changelog_file" >> $TMP_DIR/Changelog_new
+  /usr/bin/mv -fT $TMP_DIR/Changelog_new "$changelog_file"
+fi
 
 cd "$CURDIR"
 rm -rf $TMP_DIR
 }
 # END OF keep_path
+
+function ask_ack {
+  if [ "$QUIETRUN" == Yes ]; then
+    ack=Y
+  else
+    read -p "$curmode the $SRC_DIR/${fpath}? Y/[N]: " ack <&3
+  fi
+}
 
 function keep_file_changes {
   local fpath="$1"
@@ -195,13 +232,18 @@ function keep_file_changes {
     echo "The symbolic link created."  > $TMP_DIR/changes
   elif [ ! -a "new/$fpath" -a -L "old/$fpath" ]; then
     echo "The symbolic link deleted."  > $TMP_DIR/changes
+  elif   [ ! -a "old/$fpath" -a -f "new/$fpath" ]; then
+    echo "The file created."  > $TMP_DIR/changes
   else
     diff -uN --no-dereference "old/$fpath" "new/$fpath" > $TMP_DIR/changes
   fi
   touch "$KEEP_DIR/${fpath}.changes"	# First time the file is missing.
   cat "$KEEP_DIR/${fpath}.changes" >> $TMP_DIR/changes
   /usr/bin/mv -fT $TMP_DIR/changes "$KEEP_DIR/${fpath}.changes"
+  echo "$fpath"  >> $TMP_DIR/Changelog_new
 }
+
+exec 3<&0 # Keep standart input
 
 for s in $TRACEABLE
 do

@@ -1,87 +1,71 @@
-# keepdirchanges
+# keepchanges
 
-This script follows directory changes since last execution.  
-It is keep ONLY changes and changed files.  
-It uses [rsync](https://rsync.samba.org/) program. See three main line inside the 'keepdirchanges'.  
-For use it see script 'keepchanges'.  
+This script preserve directories copy in backup store and  
+it tracks changes in the directories since the last execution.  
+In the special (keeping) store (different from the backup)  
+this script preserve only changes.  
+It uses the [rsync](https://rsync.samba.org/) program. See the 3 main lines.  
 
 ### Requirements
 
-Scripts requires [rsync](https://rsync.samba.org/) to run.  
-Bash only for 'getopts' function.
+[rsync](https://rsync.samba.org/)  
+Bourne shell.  
 
 ### Installation
 
-Simple copy files 'keepdirchanges' and 'keepchanges' in /usr/local/bin.  
+Move 'keepchanges' in the /usr/local/bin/.  
+Move 'keepchanges.conf' in the /etc/keepchanges/.  
+Edit '/etc/keepchanges/keepchanges.conf'.  
+
+### The default settings:
+
+CONFIG_FILE=/etc/keepchanges/keepchanges.conf  
+ORIGSTORE=/var/local/keepchanges/store  
+KEEPCHANGES=/var/local/keepchanges/configs  
+LOGFILES=/var/local/keepchanges/logs  
+TRACEABLE="/etc /usr/local/bin"  
+EXCLUDEFROM=keepchanges.exclude  
+RSYNC_EXE=/usr/bin/rsync  
 
 ### Using
+  
+keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]  
+	-c - The config file name, default:  
+	     "/etc/keepchanges/keepchanges.conf".  
+	All other default setups are in the config file.  
+	The command line parameters have the preferences:  
+	-d - the directory for keeps changes,  
+	-r - the traceable directory, can be plural in that case  
+	     should be in quotes with a space as delimeter,  
+	     can not have a space in the name,  
+	-b - the backup storage for the copies of the traceable directories,  
+	     we will be compare the current traceable directories content  
+	     with this copies, saved from the previous launch,  
+	-l - the log files directory,  
+	-e - pattern for excluded files (see man rsync),  
+	-i - pattern for included files (see man rsync)  
+	     has priority above the '-e' option, for example:  
+	     for keep only a 'foo' file use this options (-e '*' -i 'foo'),  
+	-n - dry run, perform a trial run with no changes make,  
+	-k - keep changes in the keeping store,  
+	-s - sync changes in the backup store,  
+	-h - help,  
+	-q - quiet run, without acknowledgement query for each file,  
+	-v - be verbose.  
+  
 
+For example:  
 ```sh
-$ keepchanges work
+$ keepchanges
 ```
 some time later:
 ```sh
-$ keepchanges work
+$ keepchanges -kq
 ```
 You have kept changes.  
-Default storage path - "/root/keepchanges".  
-And default tracking paths - "/etc" "/usr/local/bin".  
-
-### Restriction
-
-It can't track binary files, because use 'diff' program for tracking.
 
 ### Useful advices
 
-I use 'keepchanges work' for current tracking.  
-'keepchanges login' in my '~/bashrc' for fix forgotten changes.  
-'keepchanges yum' for yum's post-transaction plugin.  
-  
-For file 'filename' recovery you can edit filename.changes, if you want, and:
-```sh
-$ patch -R < filename.changes
-```
+I use 'keepchanges' for tracking the '/etc'.  
+It more handy than 'etckeeper' because keeps only changes that I made.  
 
-### Changelog
-
-```sh
-# head /root/keepchanges/Changelog
-2017-02-21 14:24:17.617377707+03:00        yum/etc
-Files old/mail.rc and new/mail.rc differ
-Files old/mykeeper/packages.list and new/mykeeper/packages.list differ
-Files old/smartmontools/smartd.conf and new/smartmontools/smartd.conf differ
-Files old/smartmontools/smartd_warning.sh and new/smartmontools/smartd_warning.sh differ
-Files old/sysconfig/smartmontools and new/sysconfig/smartmontools differ
-************************************************
-2017-02-21 14:02:05.988866107+03:00        work/etc
-Files old/fstab and new/fstab differ
-Files old/lvm/archive/vg_00001-518342034.vg and new/lvm/archive/vg_00001-518342034.vg differ
-```
-
-```sh
-# cat /root/keepchanges/work/etc/fstab.changes
---- old/./fstab 2017-02-21 13:53:43.294960868 +0300
-+++ new/./fstab 2017-02-21 14:02:05.798888373 +0300
-@@ -7,4 +7,5 @@
- /dev/vg/root  /  ext4  defaults 0 1
- /dev/vg/swap  swap  swap  defaults 0 0
- /dev/vg/var  /var  ext4  defaults 0 2
--/dev/mapper/arch /arch ext4  defaults,noauto 0 0
-+UUID=c1c5ba68-82d6-4b86-8e1b-5f875e1ca45e /arch ext4  defaults,noauto 0 0
-+UUID=c97e8d60-a04f-4578-b004-2c4b8b07b840 /vdsk ext4  defaults 0 2
---- old/./fstab 2017-02-17 20:55:12.940034619 +0300
-+++ new/./fstab 2017-02-21 13:53:43.229960875 +0300
-@@ -2,8 +2,9 @@
- devpts /dev/pts devpts gid=5,mode=620 0 0
- tmpfs /dev/shm tmpfs defaults 0 0
- sysfs /sys sysfs defaults 0 0
--/dev/md/0 /boot ext3 defaults 0 0
-+/dev/md/0 /boot ext3 defaults 0 2
- # /dev/md/1 belongs to LVM volume group 'vg'
--/dev/vg/root  /  ext4  defaults 0 0
-+/dev/vg/root  /  ext4  defaults 0 1
- /dev/vg/swap  swap  swap  defaults 0 0
--/dev/vg/var  /var  ext4  defaults 0 0
-+/dev/vg/var  /var  ext4  defaults 0 2
-+/dev/mapper/arch /arch ext4  defaults,noauto 0 0
-```

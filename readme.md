@@ -1,8 +1,8 @@
 # keepchanges
 
-This script preserve directories copy in backup store and  
+This script preserve directories copy in a backup store and  
 it tracks changes in the directories since the last execution.  
-In the special (keeping) store (different from the backup)  
+In a special (keeping) store (different from the backup)  
 this script preserve only changes.  
 It uses the [rsync](https://rsync.samba.org/) program. See the 3 main lines.  
 

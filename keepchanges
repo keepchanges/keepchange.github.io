@@ -42,7 +42,7 @@ Usage:	keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]
 	-k - keep changes in the keeping store,
 	-s - sync changes in the backup store,
 	-h - help,
-	-q - quiet run, without acknowledgement query for each file,
+	-q - quiet run, without acknowledgement query for each changed file,
 	-v - be verbose.
 USAGE_END
 }
@@ -220,7 +220,7 @@ function ask_ack {
   if [ "$QUIETRUN" == Yes ]; then
     ack=Y
   else
-    read -p "$curmode the $SRC_DIR/${fpath}? Y/[N]: " ack <&3
+    read -p "$curmode the '${fpath}'? Y/[N]: " ack <&3
   fi
 }
 

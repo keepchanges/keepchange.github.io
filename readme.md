@@ -48,7 +48,7 @@ keepchanges [-cdrbl path_name] [-ei pattern] [-n|k|s] [-h] [-q] [-v]
 	-k - keep changes in the keeping store,  
 	-s - sync changes in the backup store,  
 	-h - help,  
-	-q - quiet run, without acknowledgement query for each file,  
+	-q - quiet run, without acknowledgement query for each changed file,  
 	-v - be verbose.  
 
 ```  

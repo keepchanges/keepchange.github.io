@@ -1,4 +1,4 @@
 #!/bin/sh
 
 mkdir -p /etc/keepchanges
-rpm -qa --qf "%{NAME}\n" |sort > /etc/keepchanges/packages.list
+rpm -qa --qf "%{NAME}\n" |sort > /etc/keepchanges/plist

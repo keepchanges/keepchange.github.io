@@ -244,7 +244,7 @@ function keep_file_changes {
 }
 
 exec 3<&0 # Keep standart input
-
+packlist
 for s in $TRACEABLE
 do
   keep_path "$s"

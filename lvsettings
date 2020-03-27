@@ -1,0 +1,30 @@
+#!/bin/sh
+#exec 1>/arch/zbak/conf/arhost/volume.output
+exec 1>/arch/arh/volume.output 2>&1
+echo '######### pvs -o+lv_name,lv_size,pvseg_all ############'
+echo
+pvs -o+lv_name,lv_size,pvseg_all
+echo
+echo '##################### fdisk ###########################'
+echo
+fdisk -l /dev/cvg/*
+echo
+echo '###################### lvs ############################'
+echo
+lvs
+echo
+echo '##################### lsblk ###########################'
+echo
+lsblk
+echo
+echo '#################### smartctl ###########################'
+echo
+set -x
+smartctl -A /dev/sda
+smartctl -A /dev/sdb
+smartctl -A /dev/sdc
+smartctl -A /dev/sdd
+smartctl -A /dev/sde
+smartctl -A /dev/sdf
+smartctl -A /dev/sdg
+smartctl -A /dev/sdh

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+main_func () {
+. /etc/keepchanges/cronback.conf
+if [ "$archprefix" = "" ]; then
+    error_message $LINENO $? "No configuration"
+    exit 1
+fi
+
+echo The backup has been started, date:$(date).
+allvmsstopped=no
+sleepperiods=20
+sleeptimeout=60 ### stopping vms wait time = sleeptimeout*sleepperiods
+versiondate=$(date '+%Y-%m-%d-%H-%M')
+regexpr_running_vms='.*('$(echo $vms | tr ' ' '|')').*running' #replace spaces( ) with vertical bars(|)
+listofsnapvms=""
+
+lvsettings
+
+for vm in $shutvms; do
+    virsh shutdown $vm
+    sleep 1
+done
+
+for loop in $(eval echo {1..$sleepperiods}); do
+    sleep $sleeptimeout
+    echo The wait loop number ${loop} finished, date:$(date).
+    vcount=$(virsh list | grep -E "$regexpr_running_vms" | wc -l)
+    if [ "$vcount" = "0" ]; then
+        allvmsstopped=yes
+        break
+    fi
+done
+
+if [ "$allvmsstopped" != "yes" ]; then
+    error_message "$LINENO" "1" "A virtual machine hasn't been stopped."
+    virsh list
+    ### Try backup the running virtual machines
+fi
+
+for vol in $vols; do
+    lvcreate -s -n snap_$vol -kn /dev/${vmsvg}/$vol
+    listofsnapvms="$listofsnapvms /dev/${vmsvg}/snap_${vol}"
+done
+
+sync
+
+if [ "$rootvg" != "no" ]; then
+    lvcreate -s -n snap_root -L 9GiB ${rootvg}/root ${rootpv}
+    listofsnapvms="$listofsnapvms /dev/${rootvg}/snap_root"
+fi
+
+echo Lvs output after snapshots created:
+lvs
+
+start_vms
+
+sleep 2
+borg create --stats --read-special --exclude=${pathtorepo} --chunker-params=12,23,17,4095 ${pathtorepo}::${archprefix}-${versiondate}-${archsuffix} $listofsnapvms $keeppaths
+sleep 5
+echo Lvs output before snapshots destroyed:
+lvs
+lvremove -y $listofsnapvms
+sleep 5
+echo Lvs output after snapshots destroyed:
+lvs
+borg prune ${pathtorepo} -v --list --keep-last=5
+
+echo start rsync $(date)
+rsync_box
+echo end rsync $(date)
+
+## borgupload
+#hhm-borgupload
+
+echo The backup has been completed, date:$(date).
+
+} # END of main_func
+
+start_vms () {
+    echo 1 > /proc/sys/vm/drop_caches
+    for vm in $vms; do
+        sleep 10
+        virsh start $vm
+    done
+    sleep 300
+    virsh list
+}
+
+rsync_box () {
+    rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/sbox' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all
+}
+
+exit_without_errors () {
+    echo $versiondate >${pathtoarch}goodarchdate
+    rsync_box
+}
+
+. trap_errors
+
+main_func "$@"; exit $?

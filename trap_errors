@@ -1,0 +1,45 @@
+#!/bin/bash
+# default: "set +e" Try finished with errors
+
+exit_function () {
+###    exec 2>&${STDERR}   #restore the standart error output, close/flush ERRLOG's descriptor
+    exec 2>&1              # close/flush ERRLOG's descriptor
+    if [ "$ERRNUM" != "0" ]
+    then mail -s "Errors in $PROGNAME" root <<-ENDBODY
+	$(cat $ERRLOG)
+	ENDBODY
+    elif [ "$(type -t exit_without_errors)" = "function" ]; then
+	exit_without_errors
+    fi
+    rm -f "$ERRLOG"
+}
+
+error_message () {
+    let ERRNUM+=1
+    ERRLINE="${1:-NULL}"         # line of error occurrence
+    ERRCODE="${2:-NULL}"         # error code
+    ERRMSG="${3:-trap}"          # error message if have
+    echo The error$ERRNUM \""$ERRMSG"\" with the code $ERRCODE has happened $(date) on the line $ERRLINE
+    echo '################ End of the error ################'
+} 1>&2
+
+trap_errors () { # Maybe need inside functions if no "set -o errtrace"
+    trap 'error_message "$LINENO" "$?"' ERR
+}
+
+set -o errtrace
+ERRLOG="/var/tmp/${$}_error.log"
+ERRNUM=0
+PROGNAME="${0}"
+echo '########## Beginning of the errors output ########' 1>$ERRLOG
+### exec {STDERR}>&2    #keep standart error output. Lvs cries about inhireted fd, no "FD_CLOEXEC" flag in bash
+exec 2>> >(tee -ia "$ERRLOG" 1>&2)
+trap 'error_message "$LINENO" "$?"' ERR
+trap 'exit_function' EXIT
+
+# Use examples:
+#error_message "" "" "Empty message"
+#error_message $LINENO $? "Not empty message"
+
+#ls adkfsafksafksafjjf
+#echo the End

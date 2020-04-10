@@ -7,6 +7,25 @@
 ### if you need some action in the end of script without errors.
 ### You can recursively include this file many times without problem
 
+# Use examples:
+#. trap_errors
+#error_message "" "" "Empty message"
+#error_message $LINENO $? "Not empty message"
+#ls not_existed_file_adkfsafksafksafjjf
+
+if [ "${TRAPERRLOG:-NotInit}" != "NotInit" ]; then
+    return 0 # already initialized
+fi
+set -o errtrace
+TRAPERRLOG="/var/tmp/trap${BASHPID}errors.log"
+TRAPERRNUM=0
+TRAPPROGNAME="${0}"
+export TRAPERRLVL=${TRAPERRLVL:-$SHLVL}
+### exec {TRAPSTDERR}>&2 # Сommented out because LVS cries about inhireted fd, and in the bash no standart method for set "FD_CLOEXEC" flag
+exec 2>> >(tee -ia "$TRAPERRLOG" 1>&2)
+trap 'error_message "$LINENO" "$?"' ERR
+trap 'trap_exit_function' EXIT
+
 trap_exit_with_errors () {
     if [ "$(type -t exit_with_errors)" = "function" ]; then
 	exit_with_errors "$TRAPERRLOG"
@@ -48,21 +67,3 @@ error_message () {
 ### trap_errors () {
 ###    trap 'error_message "$LINENO" "$?"' ERR
 ###}
-
-if [ "${TRAPERRLOG:-NotInit}" != "NotInit" ]; then
-    return 0 # already initialized
-fi
-set -o errtrace
-TRAPERRLOG="/var/tmp/trap${BASHPID}errors.log"
-TRAPERRNUM=0
-TRAPPROGNAME="${0}"
-export TRAPERRLVL=${TRAPERRLVL:-$SHLVL}
-### exec {TRAPSTDERR}>&2 # Сommented out because LVS cries about inhireted fd, and in the bash no standart method for set "FD_CLOEXEC" flag
-exec 2>> >(tee -ia "$TRAPERRLOG" 1>&2)
-trap 'error_message "$LINENO" "$?"' ERR
-trap 'trap_exit_function' EXIT
-
-# Use examples:
-#error_message "" "" "Empty message"
-#error_message $LINENO $? "Not empty message"
-#ls not_existed_file_adkfsafksafksafjjf

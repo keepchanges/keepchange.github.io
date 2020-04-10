@@ -1,45 +1,68 @@
 #!/bin/bash
-# default: "set +e" Try finished with errors
+### default: "set +e" Try finished with errors
+### Callback function exit_with_errors()
+### for change exit code behaviour - send mail to root if errors.
+### For sample, output all errors: exit_with_errors () { cat "$1"; }
+### Callback function exit_without_errors()
+### if you need some action in the end of script without errors.
+### You can recursively include this file many times without problem
 
-exit_function () {
-###    exec 2>&${STDERR}   #restore the standart error output, close/flush ERRLOG's descriptor
-    exec 2>&1              # close/flush ERRLOG's descriptor
-    if [ "$ERRNUM" != "0" ]
-    then mail -s "Errors in $PROGNAME" root <<-ENDBODY
-	$(cat $ERRLOG)
+trap_exit_with_errors () {
+    if [ "$(type -t exit_with_errors)" = "function" ]; then
+	exit_with_errors "$TRAPERRLOG"
+    else
+	mail -s "Errors in $TRAPPROGNAME" root <<-ENDBODY
+	$(cat $TRAPERRLOG)
 	ENDBODY
+    fi
+}
+
+trap_exit_function () {
+### exec 2>&${TRAPSTDERR}   # restore the standart error output, close/flush TRAPERRLOG's descriptor
+    exec 2>&1               # close/flush TRAPERRLOG's descriptor
+    if [ "$TRAPERRNUM" != "0" ]; then
+	trap_exit_with_errors
     elif [ "$(type -t exit_without_errors)" = "function" ]; then
 	exit_without_errors
     fi
-    rm -f "$ERRLOG"
+    rm -f "$TRAPERRLOG"
 }
 
 error_message () {
-    let ERRNUM+=1
-    ERRLINE="${1:-NULL}"         # line of error occurrence
-    ERRCODE="${2:-NULL}"         # error code
-    ERRMSG="${3:-trap}"          # error message if have
-    echo The error$ERRNUM \""$ERRMSG"\" with the code $ERRCODE has happened $(date) on the line $ERRLINE
-    echo '################ End of the error ################'
+    let TRAPERRNUM+=1
+    local errline="${1:-NULL}"  # line of error occurrence
+    local errcode="${2:-NULL}"  # error code
+    local errmsg="${3:-Trap}"   # error message
+    local i srcfile="" paragraph="${TRAPERRNUM}"
+    for (( i=SHLVL-TRAPERRLVL; i>=0; i--)); do
+	paragraph="  ${paragraph}"
+    done
+    if [ "$TRAPPROGNAME" != "${BASH_SOURCE[1]}" ]; then
+	srcfile="${BASH_SOURCE[1]} "
+    fi
+    echo "${paragraph} $TRAPPROGNAME Date: $(date)"
+    echo "${paragraph} ${srcfile}${errmsg} with exit code $errcode at the line $errline"
 } 1>&2
 
-trap_errors () { # Maybe need inside functions if no "set -o errtrace"
-    trap 'error_message "$LINENO" "$?"' ERR
-}
+### # Need to call this function inside functions, if no "errtrace" flag.
+### trap_errors () {
+###    trap 'error_message "$LINENO" "$?"' ERR
+###}
 
+if [ "${TRAPERRLOG:-NotInit}" != "NotInit" ]; then
+    return 0 # already initialized
+fi
 set -o errtrace
-ERRLOG="/var/tmp/${$}_error.log"
-ERRNUM=0
-PROGNAME="${0}"
-echo '########## Beginning of the errors output ########' 1>$ERRLOG
-### exec {STDERR}>&2    #keep standart error output. Lvs cries about inhireted fd, no "FD_CLOEXEC" flag in bash
-exec 2>> >(tee -ia "$ERRLOG" 1>&2)
+TRAPERRLOG="/var/tmp/trap${BASHPID}errors.log"
+TRAPERRNUM=0
+TRAPPROGNAME="${0}"
+export TRAPERRLVL=${TRAPERRLVL:-$SHLVL}
+### exec {TRAPSTDERR}>&2 # Сommented out because LVS cries about inhireted fd, and in the bash no standart method for set "FD_CLOEXEC" flag
+exec 2>> >(tee -ia "$TRAPERRLOG" 1>&2)
 trap 'error_message "$LINENO" "$?"' ERR
-trap 'exit_function' EXIT
+trap 'trap_exit_function' EXIT
 
 # Use examples:
 #error_message "" "" "Empty message"
 #error_message $LINENO $? "Not empty message"
-
-#ls adkfsafksafksafjjf
-#echo the End
+#ls not_existed_file_adkfsafksafksafjjf

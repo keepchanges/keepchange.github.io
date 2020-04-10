@@ -12,10 +12,13 @@ useradd -m "$username"
 mkdir -p ${archdir}/${hostdir}
 chown -R ${username}:${username} ${archdir}/${hostdir}
 touch /home/${username}/${logfile}
-chown ${username}:${username} /home/${username}/${logfile}
-restorecon /home/${username}/${logfile}
+mkdir /home/${username}/.ssh
+touch /home/${username}/.ssh/authorized_keys
+chown -R ${username}:${username} /home/${username}
+restorecon -R /home/${username}
+
 ssh-keygen -C "$myname" -f ${archdir}/.ssh/${myname}
-echo -n 'command="/usr/local/bin/rrsync '${archdir}/${hostdir}'",restrict '$(cat $archdir/.ssh/${myname}.pub) \
+echo -n 'command="/usr/local/bin/rrsync '${archdir}/${hostdir}/${myname}root'",restrict '$(cat $archdir/.ssh/${myname}.pub) \
  >/var/local/keepchanges/src/rrsync/${myname}.authorized_key
 }
 

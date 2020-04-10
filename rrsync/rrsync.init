@@ -1,0 +1,24 @@
+#!/bin/bash
+
+main_func () {
+
+myname=$(hostname -s)
+username=ursync
+hostdir=$username
+archdir=/arch
+logfile=rrsync.log
+
+useradd -m "$username"
+mkdir -p ${archdir}/${hostdir}
+chown -R ${username}:${username} ${archdir}/${hostdir}
+touch /home/${username}/${logfile}
+chown ${username}:${username} /home/${username}/${logfile}
+restorecon /home/${username}/${logfile}
+ssh-keygen -C "$myname" -f ${archdir}/.ssh/${myname}
+echo -n 'command="/usr/local/bin/rrsync '${archdir}/${hostdir}'",restrict '$(cat $archdir/.ssh/${myname}.pub) \
+ >/var/local/keepchanges/src/rrsync/${myname}.authorized_key
+}
+
+. trap_errors
+
+main_func "$@"; exit $?

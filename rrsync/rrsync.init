@@ -21,7 +21,7 @@ ssh-keygen -C "$myname" -f ${archdir}/.ssh/${myname}
 echo -n 'command="/usr/local/bin/rrsync '${archdir}/${hostdir}/${myname}root'",restrict '$(cat $archdir/.ssh/${myname}.pub) \
  >/var/local/keepchanges/src/rrsync/${myname}.authorized_key
 
-cat >>/etc/sshd_config <<"ENDHERE"
+cat >>/etc/ssh/sshd_config <<"ENDHERE"
 Match User ursync
     PasswordAuthentication no
     PermitTTY no

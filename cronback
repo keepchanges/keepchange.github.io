@@ -90,6 +90,7 @@ start_vms () {
 
 rsync_box () {
     rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/sbox' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all
+    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/berz' ${pathtoarch} ursync@arh.arneis.ru:/
 }
 
 exit_without_errors () {

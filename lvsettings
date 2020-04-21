@@ -1,6 +1,7 @@
 #!/bin/sh
 #exec 1>/arch/zbak/conf/arhost/volume.output
-exec 1>/arch/arh/volume.output 2>&1
+. /etc/keepchanges/cronback.conf
+exec 1>${pathtoarch}volume.output 2>&1
 echo '######### pvs -o+lv_name,lv_size,pvseg_all ############'
 echo
 pvs -o+lv_name,lv_size,pvseg_all

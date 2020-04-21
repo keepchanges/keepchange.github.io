@@ -1,7 +1,8 @@
 #!/bin/bash
 
-main_func () {
 . /etc/keepchanges/cronback.conf
+
+main_func () {
 if [ "$archprefix" = "" ]; then
     error_message $LINENO $? "No configuration"
     exit 1
@@ -89,8 +90,9 @@ start_vms () {
 }
 
 rsync_box () {
-    rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/sbox' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all
-    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/berz' ${pathtoarch} ursync@arh.arneis.ru:/
+    rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all
+    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore01}
+    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore02}
 }
 
 exit_without_errors () {

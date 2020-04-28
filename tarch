@@ -1,0 +1,46 @@
+#!/bin/bash
+
+. trap_errors
+
+. /etc/keepchanges/cronback.conf
+
+mymain () {
+
+version_date=$(date '+%Y-%m-%d')
+
+archdate01=/arch/ursync/hhmroot/goodarchdate
+archdate02=/arch/ursync/arhroot/goodarchdate
+archdate03=/arch/ursync/berzroot/goodarchdate
+
+{
+    grep ${version_date} $archdate01
+    grep ${version_date} $archdate02
+    grep ${version_date} $archdate03
+} 1>/dev/null
+
+tvolumes
+
+vols_number=$(echo $vols | wc -w)
+if [ "$rootvg" != "no" ]; then
+    let vols_number+=1
+fi
+versiondate=$(cat ${pathtoarch}goodarchdate)
+arch_name=${pathtorepo}::${archprefix}-${versiondate}-${archsuffix}
+tarch "$arch_name" "$vols_number"
+}
+
+tarch () {
+    local arch_name
+    local arch_name="$1"
+    local vols_number="$2"
+    local fcount
+    fcount=$(borg list "$arch_name" dev | wc -l)
+    if [ "$fcount" != "$vols_number" ]; then
+	error_message $(($LINENO-2)) "" "Wrong number of volumes in archive: ${arch_name}"
+    fi
+}
+
+### Uncomment for disable mail for root if errors
+### exit_with_errors () { echo "Errors was happened!"; }
+
+mymain "$@"; exit $?

@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+### Warning: only the first error in a section can be displayed
+### Field numbering starts from zero
+### 'last' is in the file's section last, not in the dictionary
+
+import sys
+
+chk_files = {
+    '/arch/ursync/hhmroot/volume.output': {
+        'smartctl -A /dev/sda': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdb': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdc': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdd': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        '##### lvs #####': {
+            'fast       cvg': {'field': 4, 'max': 90.0, 'last': False},
+            'buh01      cvg': {'field': 5, 'max': 85.0, 'last': False},
+            'c7web      cvg': {'field': 5, 'max': 90.0, 'last': False},
+            'git        cvg': {'field': 5, 'max': 80.0, 'last': False},
+            'vmail      cvg': {'field': 5, 'max': 40.0, 'last': False},
+            'w81c       cvg': {'field': 5, 'max': 22.0, 'last': False},
+            'w81c_data  cvg': {'field': 5, 'max': 12.0, 'last': True},
+            'tsof       cvg': {'field': 5, 'max': 45.0, 'last': False},
+        },
+    },
+    '/arch/ursync/arhroot/volume.output': {
+        'smartctl -A /dev/sda': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdb': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdc': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdd': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sde': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdf': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdg': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdh': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        '##### lvs #####': {
+            'wsql       cvg': {'field': 5, 'max': 60.0, 'last': True},
+            'wgtd       cvg': {'field': 5, 'max': 38.0, 'last': False},
+            'wfr        cvg': {'field': 5, 'max': 70.0, 'last': False},
+            'crm        cvg': {'field': 5, 'max': 70.0, 'last': False},
+            'cfast_heap cvg': {'field': 4, 'max': 85.0, 'last': False},
+            'dbgtd      cvg': {'field': 5, 'max': 60.0, 'last': False},
+            'dsk_wgtd   cvg': {'field': 5, 'max': 70.0, 'last': False},
+            'dsk_wsql   cvg': {'field': 5, 'max': 32.0, 'last': False},
+            'cvdsk_heap cvg': {'field': 4, 'max': 85.0, 'last': False},
+        },
+    },
+    '/arch/ursync/berzroot/volume.output': {
+        'smartctl -A /dev/sda': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdb': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdc': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdd': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sde': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        'smartctl -A /dev/sdf': {
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
+        },
+        '##### lvs #####': {
+            'dsk_wts slow': {'field': 5, 'max': 55.0, 'last': True},
+            'big     slow': {'field': 4, 'max': 80.0, 'last': False},
+            'work    fast': {'field': 4, 'max': 40.0, 'last': False},
+            'wdb     fast': {'field': 5, 'max': 75.0, 'last': False},
+            'wts     fast': {'field': 5, 'max': 60.0, 'last': False},
+            'wco     fast': {'field': 5, 'max': 20.0, 'last': False},
+            'w1c     fast': {'field': 5, 'max': 85.0, 'last': False},
+            'mssqldb fast': {'field': 5, 'max': 16.0, 'last': False},
+        },
+    },
+}
+
+
+def mymain():
+    exit_code = 0
+    for f in chk_files:
+        with open(f) as infile:
+            mylist = list(infile)
+        for section in chk_files[f]:
+            err_string = check_section(mylist, section, chk_files[f][section])
+            if err_string != "":
+                exit_code = 1
+                print('Error in file: ' + f + ', section: ' + section + ', ' +
+                      'string: ' + err_string, file=sys.stderr)
+    return exit_code
+
+
+def check_section(mylist, name, section):
+    insection = False
+    lenofsection = len(section)
+    okchecked = 0
+    for line in mylist:
+        if not insection:
+            if line.find(name) != -1:
+                insection = True
+            continue
+        for checkstr in section:
+            ret = check_string(line, checkstr, section[checkstr])
+            if ret == 'NotFound':
+                continue
+            if ret == 'ErrorValue':
+                return checkstr
+            if ret == 'OkValue':
+                okchecked += 1
+                continue
+            if ret == 'OkValueLast':
+                okchecked += 1
+                if okchecked < lenofsection:
+                    strnum = str(lenofsection - okchecked)
+                    return strnum + ' strings was not found'
+                if okchecked > lenofsection:
+                    strnum = str(okchecked - lenofsection)
+                    return 'was found ' + strnum + ' more strings'
+                ### okchecked == lenofsection
+                return ""
+    return 'the last string was not found'
+
+
+def check_string(line, chkstr, checkdata):
+    if line.find(chkstr) != -1:
+        field = line.split()[checkdata['field']]
+        ### print(field)
+        value = float(field.replace(',', '.'))
+        if value > checkdata['max']:
+            return 'ErrorValue'
+        if checkdata['last']:
+            return 'OkValueLast'
+        return 'OkValue'
+    return 'NotFound'
+
+
+sys.exit(mymain())

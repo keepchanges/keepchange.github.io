@@ -16,6 +16,10 @@ versiondate=$(date '+%Y-%m-%d-%H-%M')
 regexpr_running_vms='.*('$(echo $vms | tr ' ' '|')').*running' #replace spaces( ) with vertical bars(|)
 listofsnapvms=""
 
+if [ "$1" = "rsync" ]; then
+    rsync_box; exit $?
+fi
+
 lvsettings
 
 for vm in $shutvms; do

@@ -142,7 +142,8 @@ def check_section(mylist, name, section):
                     return 'was found ' + strnum + ' more strings'
                 ### okchecked == lenofsection
                 return ""
-    return 'the last string was not found'
+    return str('the last string was not found after ' + okchecked +
+               ' ok checked times')
 
 
 def check_string(line, chkstr, checkdata):

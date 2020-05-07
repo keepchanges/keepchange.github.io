@@ -16,10 +16,6 @@ versiondate=$(date '+%Y-%m-%d-%H-%M')
 regexpr_running_vms='.*('$(echo $vms | tr ' ' '|')').*running' #replace spaces( ) with vertical bars(|)
 listofsnapvms=""
 
-if [ "$1" = "rsync" ]; then
-    rsync_box; exit $?
-fi
-
 lvsettings
 
 for vm in $shutvms; do
@@ -73,7 +69,7 @@ lvs
 borg prune ${pathtorepo} -v --list --keep-last=5
 
 echo start rsync $(date)
-rsync_box
+archupload
 echo end rsync $(date)
 
 ## borgupload
@@ -93,15 +89,9 @@ start_vms () {
     virsh list
 }
 
-rsync_box () {
-    rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all
-    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore01}
-    rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore02}
-}
-
 exit_without_errors () {
     echo $versiondate >${pathtoarch}goodarchdate
-    rsync_box
+    archupload
 }
 
 . trap_errors

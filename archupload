@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. trap_errors
+. /etc/keepchanges/cronback.conf
+
+main_archupload () {
+    if [ "$archprefix" = "" ]; then
+        error_message $LINENO $? "No configuration"
+        exit 1
+    fi
+
+    local loop ret
+    for loop in $(seq 1 12); do
+        ret=0
+        sleep 300
+        rsync -rlptgokW --delete -e 'ssh -p 23 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${boxname}@${boxname}.your-storagebox.de:all || ret=1
+        rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore01} || ret=1
+        rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore02} || ret=1
+        if [ "$ret" = "0" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+main_archupload "$@"; exit $?

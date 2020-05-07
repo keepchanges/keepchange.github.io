@@ -34,8 +34,8 @@ for loop in $(seq 1 $sleepperiods); do
 done
 
 if [ "$allvmsstopped" != "yes" ]; then
-    echo Not stopped vms: 2>&1
-    virsh list 2>&1
+    echo Not stopped vms: 1>&2
+    virsh list 1>&2
     error_message "$LINENO" "1" "A virtual machine hasn't been stopped."
     ### Try backup the running virtual machines
 fi
@@ -71,9 +71,6 @@ borg prune ${pathtorepo} -v --list --keep-last=5
 echo start rsync $(date)
 archupload
 echo end rsync $(date)
-
-## borgupload
-#hhm-borgupload
 
 echo The backup has been completed, date:$(date).
 

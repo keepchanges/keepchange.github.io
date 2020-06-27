@@ -17,6 +17,7 @@ main_archupload () {
         rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore01} || ret=1
         rsync -rlptgokW --delete -e 'ssh -p 22 -oIdentityFile=/arch/.ssh/ursync.key' ${pathtoarch} ${backstore02} || ret=1
         if [ "$ret" = "0" ]; then
+            echo Ok exit archupload with loop number: $loop
             return 0
         fi
     done

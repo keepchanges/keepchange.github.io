@@ -61,7 +61,7 @@ chk_files = {
             'wfr        cvg': {'field': 5, 'max': 70.0, 'last': False},
             'crm        cvg': {'field': 5, 'max': 70.0, 'last': False},
             'cfast_heap cvg': {'field': 4, 'max': 85.0, 'last': False},
-            'dbgtd      cvg': {'field': 5, 'max': 60.0, 'last': False},
+            'dbgtd      cvg': {'field': 5, 'max': 65.0, 'last': False},
             'dsk_wgtd   cvg': {'field': 5, 'max': 80.0, 'last': False},
             'dsk_wsql   cvg': {'field': 5, 'max': 32.0, 'last': False},
             'cvdsk_heap cvg': {'field': 4, 'max': 85.0, 'last': False},

@@ -62,7 +62,7 @@ chk_files = {
             'crm        cvg': {'field': 5, 'max': 70.0, 'last': False},
             'cfast_heap cvg': {'field': 4, 'max': 85.0, 'last': False},
             'dbgtd      cvg': {'field': 5, 'max': 65.0, 'last': False},
-            'dsk_wgtd   cvg': {'field': 5, 'max': 80.0, 'last': False},
+            'dsk_wgtd   cvg': {'field': 5, 'max': 90.0, 'last': False},
             'dsk_wsql   cvg': {'field': 5, 'max': 32.0, 'last': False},
             'cvdsk_heap cvg': {'field': 4, 'max': 85.0, 'last': False},
         },
@@ -87,7 +87,7 @@ chk_files = {
             'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
         },
         '##### lvs #####': {
-            'dsk_wts  slow': {'field': 5, 'max': 60.0, 'last': True},
+            'dsk_wts  slow': {'field': 5, 'max': 75.0, 'last': True},
             'big      slow': {'field': 4, 'max': 80.0, 'last': False},
             'work     fast': {'field': 4, 'max': 40.0, 'last': False},
             'wdb      fast': {'field': 5, 'max': 75.0, 'last': False},

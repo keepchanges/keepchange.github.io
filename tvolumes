@@ -57,7 +57,7 @@ chk_files = {
         },
         '##### lvs #####': {
             'wsql       cvg': {'field': 5, 'max': 60.0, 'last': True},
-            'wgtd       cvg': {'field': 5, 'max': 42.0, 'last': False},
+            'wgtd       cvg': {'field': 5, 'max': 55.0, 'last': False},
             'wfr        cvg': {'field': 5, 'max': 70.0, 'last': False},
             'crm        cvg': {'field': 5, 'max': 85.0, 'last': False},
             'cfast_heap cvg': {'field': 4, 'max': 85.0, 'last': False},

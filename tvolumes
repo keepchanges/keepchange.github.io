@@ -91,7 +91,7 @@ chk_files = {
             'big      slow': {'field': 4, 'max': 85.0, 'last': False},
             'work     fast': {'field': 4, 'max': 40.0, 'last': False},
             'wdb      fast': {'field': 5, 'max': 75.0, 'last': False},
-            'wts      fast': {'field': 5, 'max': 65.0, 'last': False},
+            'wts      fast': {'field': 5, 'max': 85.0, 'last': False},
             'wco      fast': {'field': 5, 'max': 40.0, 'last': False},
             'w1c      fast': {'field': 5, 'max': 85.0, 'last': False},
             'mssqldb  fast': {'field': 5, 'max': 25.0, 'last': False},

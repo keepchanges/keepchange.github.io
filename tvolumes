@@ -87,7 +87,7 @@ chk_files = {
             'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
         },
         '##### lvs #####': {
-            'dsk_wts  slow': {'field': 5, 'max': 75.0, 'last': True},
+            'dsk_wts  slow': {'field': 5, 'max': 80.0, 'last': True},
             'big      slow': {'field': 4, 'max': 90.0, 'last': False},
             'work     fast': {'field': 4, 'max': 40.0, 'last': False},
             'wdb      fast': {'field': 5, 'max': 75.0, 'last': False},

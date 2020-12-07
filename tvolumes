@@ -17,7 +17,7 @@ chk_files = {
             'Reallocated_Sector_Ct': {'field': 9, 'max': 0, 'last': True},
         },
         'smartctl -A /dev/sdd': {
-            'Reallocated_Sector_Ct': {'field': 9, 'max': 1, 'last': True},
+            'Reallocated_Sector_Ct': {'field': 9, 'max': 2, 'last': True},
         },
         '##### lvs #####': {
             'fast       cvg': {'field': 4, 'max': 90.0, 'last': False},

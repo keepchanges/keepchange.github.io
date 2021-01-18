@@ -90,7 +90,7 @@ chk_files = {
             'dsk_wts  slow': {'field': 5, 'max': 80.0, 'last': True},
             'big      slow': {'field': 4, 'max': 90.0, 'last': False},
             'work     fast': {'field': 4, 'max': 40.0, 'last': False},
-            'wdb      fast': {'field': 5, 'max': 75.0, 'last': False},
+            'wdb      fast': {'field': 5, 'max': 80.0, 'last': False},
             'wts      fast': {'field': 5, 'max': 85.0, 'last': False},
             'wco      fast': {'field': 5, 'max': 45.0, 'last': False},
             'w1c      fast': {'field': 5, 'max': 85.0, 'last': False},
